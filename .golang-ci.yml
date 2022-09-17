@@ -691,7 +691,7 @@ severity:
   # issues. Severity rules have the same filtering capability as exclude rules except you
   # are allowed to specify one matcher per severity rule.
   # Only affects out formats that support setting severity information.
-  rules:
-    - linters:
-        - dupl
-      severity: info
+#  rules:
+#    - linters:
+#        - dupl
+#      severity: info

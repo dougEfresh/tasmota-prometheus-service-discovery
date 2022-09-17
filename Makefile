@@ -1,4 +1,4 @@
-projectname?=tasmota-prometheus-service-discovery
+projectname?=tpsd
 VERSION ?= $(shell git rev-parse --short HEAD)
 #shell git describe --abbrev=0 --tags)
 default: help
