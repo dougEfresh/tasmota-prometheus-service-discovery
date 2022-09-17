@@ -25,7 +25,7 @@ fmtcheck: ## run gofmt and print detected files
 
 PHONY: test
 test: ## run go tests
-	go test -v ./...
+	go test -race -v ./...
 
 PHONY: clean
 clean: ## clean up environment

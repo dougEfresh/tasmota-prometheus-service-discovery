@@ -73,6 +73,7 @@ func (m *MqttDiscover) Discover() ([]domain.TasmotaNet, error) {
 	}
 
 	time.Sleep(m.timeout)
+	m.client.Disconnect(DISCONNECT)
 
 	return tasmotas, errors
 
