@@ -36,9 +36,10 @@ cover: ## display test coverage
 	go test -v -race $(shell go list ./... | grep -v /vendor/) -v -coverprofile=coverage.out
 	go tool cover -func=coverage.out
 
+
 PHONY: fmt
 fmt: ## format go files
-	gofumpt -w -s  .
+	go fmt ./...
 
 PHONY: lint
 lint: ## lint go files

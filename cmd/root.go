@@ -11,7 +11,7 @@ func newRootCmd(version string) *cobra.Command {
 		Use:   "tasmota-prometheus-service-discovery",
 		Short: "golang-cli project template demo application",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println(cmd.UsageString())
+			_, _ = fmt.Fprint(cmd.OutOrStderr(), cmd.UsageString())
 
 			return nil
 		},
