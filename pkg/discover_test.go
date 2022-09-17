@@ -73,28 +73,37 @@ func TestNewMqttDiscover(t *testing.T) {
 	require.NoError(t, token.Error())
 
 	// nolint varnamelen
-	token = testClient.Subscribe("#", 0, func(client mqtt.Client, message mqtt.Message) {
+	token = testClient.Subscribe("cmnd/tasmotas/status", 0, func(client mqtt.Client, message mqtt.Message) {
 		t.Logf("Recv:  topic:%s message:%s", message.Topic(), string(message.Payload()))
-		if message.Topic() == "cmnd/tasmotas/status" && string(message.Payload()) == "5" {
-			for _, r := range responses {
+		if string(message.Payload()) != "5" {
+			return
+		}
 
-				b, e := json.MarshalIndent(r, "", "  ")
+		for _, r := range responses {
+			resp := r
+			go func(resp domain.StatusNet) {
+				b, e := json.MarshalIndent(resp, "", "  ")
 				if e != nil {
 					t.Logf("Failed to marshal responses %s", e.Error())
 
 					return
 				}
-				client.Publish(fmt.Sprintf("stat/%s/status5", r.StatusNet.Hostname), 0, false, b)
-			}
+				topic := fmt.Sprintf("stat/%s/status5 %s", resp.StatusNet.Hostname, string(b))
+				t.Logf("Publish %s", topic)
+				if token := client.Publish(topic, 0, false, b); token.Wait() && token.Error() != nil {
+					t.Logf("failed to send %s %s", topic, token.Error())
+				}
+			}(resp)
 		}
+
 	})
 	token.Wait()
 	require.NoError(t, token.Error())
 
-	d := pkg.NewMqttDiscover(client)
+	d := pkg.NewMqttDiscover(client, 5*time.Second)
 	tasmotas, err := d.Discover()
 	require.NoError(t, err)
-	require.True(t, len(tasmotas) > 0)
+	require.Equal(t, len(tasmotas), 2)
 
 	sort.Slice(tasmotas, func(i, j int) bool {
 		return tasmotas[i].Hostname < tasmotas[j].Hostname

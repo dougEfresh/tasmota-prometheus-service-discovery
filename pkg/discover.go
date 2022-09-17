@@ -78,8 +78,9 @@ func (m *MqttDiscover) Discover() ([]domain.TasmotaNet, error) {
 
 }
 
-func NewMqttDiscover(client mqtt.Client) *MqttDiscover {
+func NewMqttDiscover(client mqtt.Client, timeout time.Duration) *MqttDiscover {
 	return &MqttDiscover{
-		client: client,
+		client:  client,
+		timeout: timeout,
 	}
 }
