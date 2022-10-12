@@ -1,4 +1,4 @@
-projectname?=tasmota-prometheus-service-discovery
+projectname?=tpsd
 VERSION ?= $(shell git rev-parse --short HEAD)
 #shell git describe --abbrev=0 --tags)
 default: help
@@ -25,7 +25,7 @@ fmtcheck: ## run gofmt and print detected files
 
 PHONY: test
 test: ## run go tests
-	go test -v ./...
+	go test -race -v ./...
 
 PHONY: clean
 clean: ## clean up environment
@@ -36,9 +36,10 @@ cover: ## display test coverage
 	go test -v -race $(shell go list ./... | grep -v /vendor/) -v -coverprofile=coverage.out
 	go tool cover -func=coverage.out
 
+
 PHONY: fmt
 fmt: ## format go files
-	gofumpt -w -s  .
+	go fmt ./...
 
 PHONY: lint
 lint: ## lint go files

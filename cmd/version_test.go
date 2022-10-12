@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// nolint varnamelen
 func TestVersionCommand(t *testing.T) {
 	version := "v1.0.0"
 	cmd := newVersionCmd(version)
