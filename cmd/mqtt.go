@@ -26,6 +26,8 @@ import (
 )
 
 func newMqttCmd() *cobra.Command {
+	const defaultTimeout = 5
+
 	return &cobra.Command{
 		Use:   "mqtt",
 		Short: "discover tasmotas from mqtt",
@@ -35,8 +37,9 @@ func newMqttCmd() *cobra.Command {
 			opts.SetClientID("prometheus_service_discovery").SetKeepAlive(time.Minute)
 			opts.SetUsername(os.Getenv("MQTT_USER")).SetPassword(os.Getenv("MQTT_PASSWORD"))
 			client := mqtt.NewClient(opts)
-			mqttDiscover := pkg.NewMqttDiscover(client, 5*time.Second)
+			mqttDiscover := pkg.NewMqttDiscover(client, defaultTimeout*time.Second)
 			disc := prometheus.New(cmd.Context(), mqttDiscover, logger)
+			// nolint:lll
 			sdAdapter := prometheus.NewAdapter(cmd.Context(), "/etc/prometheus/static/tasmotas.json", "tasmota-discovery", disc, logger)
 			sdAdapter.Run()
 			<-cmd.Context().Done()

@@ -12,30 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package prometheus https://github.com/prometheus/prometheus/blob/main/documentation/examples/custom-sd/adapter/adapter.go
+// Package prometheus
+// https://github.com/prometheus/prometheus/blob/main/documentation/examples/custom-sd/adapter/adapter.go
+// nolint:wsl,revive,gci
 package prometheus
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 
-	//	"reflect"
-
-	//"github.com/dougEfresh/tasmota-prometheus-service-discovery/pkg/domain"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/common/model"
-
-	//	"github.com/go-kit/log/level"
 
 	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
 )
 
+// nolint:containedctx
 type Adapter struct {
 	ctx     context.Context
 	disc    discovery.Discoverer
@@ -60,10 +59,10 @@ func (a *Adapter) refreshTargetGroups(allTargetGroups map[string][]*targetgroup.
 	})
 	if !reflect.DeepEqual(a.targets, allTargets) {
 		a.targets = allTargets
-		level.Info(log.With(a.logger, "component", "sd-adapter")).Log("updated targets")
+		_ = level.Info(log.With(a.logger, "component", "sd-adapter")).Log("updated targets")
 		err := a.writeOutput()
 		if err != nil {
-			level.Error(log.With(a.logger, "component", "sd-adapter")).Log("err", err)
+			_ = level.Error(log.With(a.logger, "component", "sd-adapter")).Log("err", err)
 		}
 	}
 }
@@ -84,6 +83,7 @@ func (a *Adapter) runCustomSD(ctx context.Context) {
 	}
 }
 
+// nolint:varnamelen
 func (a *Adapter) writeOutput() error {
 	type customSD struct {
 		Targets []string `json:"targets"`
@@ -96,18 +96,18 @@ func (a *Adapter) writeOutput() error {
 	out := []customSD{tasmotas}
 	b, err := json.MarshalIndent(out, "", "  ")
 	if err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
 	dir, _ := filepath.Split(a.output)
 	tmpfile, err := os.CreateTemp(dir, "sd-adapter")
 	if err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
 	defer tmpfile.Close()
 
 	_, err = tmpfile.Write(b)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
 
 	// Close the file immediately for platforms (eg. Windows) that cannot move
@@ -115,17 +115,20 @@ func (a *Adapter) writeOutput() error {
 	tmpfile.Close()
 	err = os.Rename(tmpfile.Name(), a.output)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
-	os.Chmod(a.output, 0444)
-	return nil
+
+	// nolint:gomnd,wrapcheck
+	return os.Chmod(a.output, 0o444)
 }
 
 // Run starts a DiscoveryDriver Manager and the custom service DiscoveryDriver implementation.
 func (a *Adapter) Run() {
 	//nolint:errcheck
 	go a.manager.Run()
+
 	a.manager.StartCustomProvider(a.ctx, a.name, a.disc)
+
 	go a.runCustomSD(a.ctx)
 }
 
@@ -133,7 +136,7 @@ func NewAdapter(ctx context.Context, file, name string, d discovery.Discoverer, 
 	return &Adapter{
 		ctx:  ctx,
 		disc: d,
-		//groups:  make(map[string]*domain.TasmotaNet),
+		// groups:  make(map[string]*domain.TasmotaNet),
 		manager: discovery.NewManager(ctx, logger),
 		output:  file,
 		name:    name,

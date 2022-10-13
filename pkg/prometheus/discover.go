@@ -23,43 +23,48 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
 )
 
 type DiscoveryDriver struct {
 	tasDiscovery    pkg.Discovery
-	address         string
 	refreshInterval int
 	logger          log.Logger
 	oldSourceList   map[string]bool
 }
 
+// nolint:staticcheck,gocognit,varnamelen
 func (d *DiscoveryDriver) Run(ctx context.Context, ch chan<- []*targetgroup.Group) {
-	for c := time.Tick(time.Duration(d.refreshInterval) * time.Second); ; {
+	for chTime := time.Tick(time.Duration(d.refreshInterval) * time.Second); ; {
+		var tgs []*targetgroup.Group
+
 		tasmotas, err := d.tasDiscovery.Discover()
+		newSourceList := make(map[string]bool)
+
 		if err != nil {
-			level.Error(d.logger).Log("msg", "Error getting tasmotas", "err", err)
+			_ = level.Error(d.logger).Log("msg", "Error getting tasmotas", "err", err)
 			time.Sleep(time.Duration(d.refreshInterval) * time.Second)
+
 			continue
 		}
+
 		_ = level.Info(d.logger).Log("msg", fmt.Sprintf("Found %d tasmotas", len(tasmotas)))
-		var tgs []*targetgroup.Group
-		newSourceList := make(map[string]bool)
+
 		for _, tasmota := range tasmotas {
 			targetHost := tasmota.Hostname
+
 			switch tasmota.Hostname {
 			case "tasmota":
 				newSourceList[tasmota.Address.String()] = true
 				targetHost = tasmota.Address.String()
-				break
 			default:
 				newSourceList[tasmota.Hostname] = true
-				break
 			}
+
 			target := model.LabelSet{
 				model.AddressLabel: model.LabelValue(targetHost),
 			}
+
 			tgs = append(tgs, &targetgroup.Group{
 				Source:  targetHost,
 				Targets: []model.LabelSet{target},
@@ -73,11 +78,13 @@ func (d *DiscoveryDriver) Run(ctx context.Context, ch chan<- []*targetgroup.Grou
 				})
 			}
 		}
+
 		d.oldSourceList = newSourceList
+
 		ch <- tgs
 		// Wait for ticker or exit when ctx is closed.
 		select {
-		case <-c:
+		case <-chTime:
 			continue
 		case <-ctx.Done():
 			return
@@ -85,11 +92,13 @@ func (d *DiscoveryDriver) Run(ctx context.Context, ch chan<- []*targetgroup.Grou
 	}
 }
 
-func New(ctx context.Context, tasDiscovery pkg.Discovery, logger log.Logger) discovery.Discoverer {
+const defaultRefresh = 300
+
+func New(ctx context.Context, tasDiscovery pkg.Discovery, logger log.Logger) *DiscoveryDriver {
 	return &DiscoveryDriver{
 		tasDiscovery:    tasDiscovery,
 		logger:          logger,
 		oldSourceList:   map[string]bool{},
-		refreshInterval: 300,
+		refreshInterval: defaultRefresh,
 	}
 }
