@@ -50,7 +50,10 @@ func (a *Adapter) refreshTargetGroups(allTargetGroups map[string][]*targetgroup.
 	for _, groups := range allTargetGroups {
 		for _, group := range groups {
 			for _, target := range group.Targets {
-				allTargets = append(allTargets, string(target[model.AddressLabel]))
+				t := string(target[model.AddressLabel])
+				if t != "" {
+					allTargets = append(allTargets, string(target[model.AddressLabel]))
+				}
 			}
 		}
 	}
