@@ -50,10 +50,7 @@ func (a *Adapter) refreshTargetGroups(allTargetGroups map[string][]*targetgroup.
 	for _, groups := range allTargetGroups {
 		for _, group := range groups {
 			for _, target := range group.Targets {
-				t := string(target[model.AddressLabel])
-				if t != "" {
-					allTargets = append(allTargets, string(target[model.AddressLabel]))
-				}
+				allTargets = append(allTargets, string(target[model.AddressLabel]))
 			}
 		}
 	}
@@ -62,7 +59,6 @@ func (a *Adapter) refreshTargetGroups(allTargetGroups map[string][]*targetgroup.
 	})
 	if !reflect.DeepEqual(a.targets, allTargets) {
 		a.targets = allTargets
-		_ = level.Info(log.With(a.logger, "component", "sd-adapter")).Log("updated targets")
 		err := a.writeOutput()
 		if err != nil {
 			_ = level.Error(log.With(a.logger, "component", "sd-adapter")).Log("err", err)

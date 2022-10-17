@@ -9,6 +9,7 @@ import (
 
 var version = ""
 
+// nolint:revive
 func main() {
 	if err := cmd.Execute(version); err != nil {
 		fmt.Fprintf(os.Stderr, "%v", err)

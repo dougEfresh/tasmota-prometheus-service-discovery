@@ -56,7 +56,9 @@ func (m *MqttDiscover) Discover() ([]domain.TasmotaNet, error) {
 			errors = multierror.Append(errors, err)
 			return
 		}
-		tasmotas = append(tasmotas, s.StatusNet)
+		if s.StatusNet.Hostname != "" {
+			tasmotas = append(tasmotas, s.StatusNet)
+		}
 	}
 
 	if token := m.client.Subscribe("stat/#", 0, hdl); token.Wait() && token.Error() != nil {
